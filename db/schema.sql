@@ -1,5 +1,5 @@
 -- create department table
-CREATE TABLE Department (
+CREATE TABLE Departments (
     depID INTEGER AUTO_INCREMENT PRIMARY KEY,
     deparment_name VARCHAR(30) NOT NULL
 );
@@ -18,5 +18,5 @@ CREATE TABLE Employees (
     roleID INTEGER NOT NULL,
     depID INTEGER NOT NULL, 
     FOREIGN KEY(roleID) REFERENCES Roles(roleID),
-    FOREIGN KEY(depID) REFERENCES Department(depID)
+    FOREIGN KEY(depID) REFERENCES Departments(depID)
 );
