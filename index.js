@@ -28,7 +28,7 @@ init = () => {
         }
     ])
     .then((answers => {
-       
+       //goes to appropriate function when it is called!
         if(answers.choices === 'view all departments' ){
             departments();
         }
@@ -69,7 +69,7 @@ departments = () => {
 //shows roles to the user!
 roles = () => {
     console.log('Now showing roles!');
-    const sql = `SELECT * FROM roles`;
+    const sql = `SELECT job_title, salary FROM roles`;
 
     db.query(sql, (err, rows) => {
         if (err) throw err;
@@ -77,7 +77,7 @@ roles = () => {
         init();
     });
 };
-
+//shows employees to the user!
 employees = () => {
     console.log('Now showing employees!');
     const sql = `SELECT * FROM employees`;
@@ -90,13 +90,65 @@ employees = () => {
 };
 
 addDepartment = () => {
-    console.log('This should add a department!');
-    init();
+    inquirer.prompt([
+        {
+            type:'input',
+            name:'addDep',
+            message: 'What department would you like to add?'
+        }
+    ])
+    .then(answer => {
+        const sql = `INSERT INTO departments (department_name) VALUES (?)`;
+        db.query(sql, answer.addDep, (err, result) => {
+            if (err) throw err;
+            console.log(answer.addDep + 'Added');
+            departments();
+        })
+    })
 };
 
 addRole = () => {
-    console.log('This should add a role!');
-    init();
+    inquirer.prompt ([
+        {
+            type: 'input',
+            name: 'addRole',
+            message: 'What Role would you like to add?'
+        },
+        {
+            type: 'input',
+            name: 'addSal',
+            message: 'Please give a salary'
+        }
+    ])
+    .then(answers => {
+        const results = [answers.addRole, answers.addSal];
+        const depsql = `SELECT department_name, depID FROM departments`;
+        db.query(depsql, (err, data) => {
+            if(err) throw err;
+
+            const dep = data.map(({ department_name, depID }) => ({ name: department_name, value: depID }));
+            inquirer.prompt([
+                {
+                    type:'list',
+                    name:'depName',
+                    message: 'What department is this role in?',
+                    choices: dep
+                }
+            ])
+            .then(answers => {
+                const allResults = answers.depName;
+                results.push(allResults);
+
+                const sql = `INSERT INTO roles (job_title, salary, depID) VALUES (?, ?, ?)`;
+
+                db.query(sql, results, (err, results) => {
+                    if(err) throw err;
+                    console.log(answers.addRole + 'added!');
+                    roles();
+                })
+            })
+        })
+    })
 };
 
 addEmployee = () => {
@@ -108,11 +160,11 @@ updateRole = () => {
     console.log('This should update the role of an employee!');
     init();
 };
-
+//closes the app!
 exit = () => {
     console.log('Thank you for using our app!');
     process.exit();
-}
+};
 
 
 
