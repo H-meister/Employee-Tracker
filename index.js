@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
+const Employee = require('./lib/employee');
 
 // connect to the database
 const db = mysql.createConnection(
@@ -45,7 +46,7 @@ init = () => {
             addRole();
         }
         if(answers.choices === 'add an employee'){
-            addEmployee
+            addEmployee();
         }
         if(answers.choices === 'update an employee role'){
             updateRole();
@@ -69,7 +70,7 @@ departments = () => {
 //shows roles to the user!
 roles = () => {
     console.log('Now showing roles!');
-    const sql = `SELECT job_title, salary FROM roles`;
+    const sql = `SELECT * FROM roles`;
 
     db.query(sql, (err, rows) => {
         if (err) throw err;
@@ -80,7 +81,10 @@ roles = () => {
 //shows employees to the user!
 employees = () => {
     console.log('Now showing employees!');
-    const sql = `SELECT * FROM employees`;
+    const sql = `SELECT Employees.ID, Employees.first_name, Employees.last_name, Roles.job_title, Roles.salary, Departments.department_name,
+     Manager.first_name AS Manager FROM Employees LEFT JOIN Roles ON Employees.roleID = Roles.roleID
+     LEFT JOIN Departments ON Roles.depID = Departments.depID
+     LEFT JOIN Employees Manager ON Manager.ID = Employees.Manager;`;
 
     db.query(sql, (err, rows) => {
         if(err) throw err;
@@ -88,7 +92,7 @@ employees = () => {
         init();
     });
 };
-
+//adds a department from the console.
 addDepartment = () => {
     inquirer.prompt([
         {
@@ -106,7 +110,7 @@ addDepartment = () => {
         })
     })
 };
-
+//adds a role from the console.
 addRole = () => {
     inquirer.prompt ([
         {
@@ -150,10 +154,77 @@ addRole = () => {
         })
     })
 };
-
+//adds an employee from the console.
 addEmployee = () => {
-    console.log('This should add an employee!');
-    init();
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'firstName',
+            message: 'Please enter the first name of your employee'
+        },
+        {
+            type: 'input',
+            name: 'lastName',
+            message: 'Please enter the last name of your employee'
+        }
+    ])
+    .then(empAnswers => {
+        const getRole = `SELECT job_title, roleID, depID FROM roles`
+        db.query(getRole, (err, data) =>{
+            const rol = data.map(({ job_title, roleID }) => ({ name: job_title, value: roleID }));
+            if(err) throw err;
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'roleList',
+                    message: 'Please choose what their role will be:',
+                    choices: rol
+                }
+            ])
+            .then(roleIDAnswer => {
+                // const [ whatRole ] = answers.roleList;
+                // names.push(whatRole);
+                const getManager = `SELECT * FROM employees`;
+                db.query(getManager, (err, data) => {
+                    if(err) throw err;
+
+                    const manager = data.map(({ roleID, first_name, last_name }) => ({ name: first_name + "" + last_name, value: roleID}));
+                    inquirer.prompt([
+                        {
+                            type:'list',
+                            name: 'manager',
+                            message: 'Please choose the employees manager!',
+                            choices: manager
+                        }
+                    ])
+                    .then(managerAnswer => {
+                        const choices = {
+                            first_name: empAnswers.firstName,
+                            last_name: empAnswers.lastName,
+                            roleID: roleIDAnswer.roleList, 
+                            Manager: managerAnswer.manager};
+
+                        console.log(choices);
+
+                        // const sql = `INSERT INTO employees (first_name, last_name, roleID, Manager) VALUES (?, ?, ?, ?);
+                        //                 SELECT employees
+                        //                 LEFT JOIN Roles on employees.roleID = roles.roleID
+                        //                 LEFT JOIN departments on roles.depID = departments.depID;
+                        //                  `;
+                        const sql = `INSERT INTO Employees SET ?`
+                        db.query(sql, choices, (err, results) => {
+                            if(err) throw err;
+                            console.log('Employee added to the database!');
+
+                            employees();
+                        })
+
+                    })
+                })
+                
+            })
+        })
+    })
 };
 
 updateRole = () => {
