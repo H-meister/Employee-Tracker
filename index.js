@@ -154,6 +154,7 @@ addRole = () => {
         })
     })
 };
+
 //adds an employee from the console.
 addEmployee = () => {
     inquirer.prompt([
@@ -182,13 +183,11 @@ addEmployee = () => {
                 }
             ])
             .then(roleIDAnswer => {
-                // const [ whatRole ] = answers.roleList;
-                // names.push(whatRole);
                 const getManager = `SELECT * FROM employees`;
                 db.query(getManager, (err, data) => {
                     if(err) throw err;
 
-                    const manager = data.map(({ roleID, first_name, last_name }) => ({ name: first_name + "" + last_name, value: roleID}));
+                    const manager = data.map(({ ID, first_name, last_name }) => ({ name: first_name + " " + last_name, value: ID}));
                     inquirer.prompt([
                         {
                             type:'list',
@@ -206,11 +205,6 @@ addEmployee = () => {
 
                         console.log(choices);
 
-                        // const sql = `INSERT INTO employees (first_name, last_name, roleID, Manager) VALUES (?, ?, ?, ?);
-                        //                 SELECT employees
-                        //                 LEFT JOIN Roles on employees.roleID = roles.roleID
-                        //                 LEFT JOIN departments on roles.depID = departments.depID;
-                        //                  `;
                         const sql = `INSERT INTO Employees SET ?`
                         db.query(sql, choices, (err, results) => {
                             if(err) throw err;
@@ -228,7 +222,26 @@ addEmployee = () => {
 };
 
 updateRole = () => {
-    console.log('This should update the role of an employee!');
+    
+    const getEmployee = `SELECT * FROM employees`
+    db.query(getEmployee, (err, data) => {
+        if(err) throw err;
+        
+        const empData = data.map(({ ID, first_name, last_name}) => ({Name: first_name + " " + last_name, Value: ID}));
+        console.log(empData);
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'update',
+            message: 'Please choose an employee you would like to update :)',
+            choices: empData
+        }
+    ])
+    .then(answer => {
+        console.log(answer);
+    })
+    })
+    // console.log('This should update the role of an employee!');
     init();
 };
 //closes the app!
